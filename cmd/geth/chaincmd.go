@@ -123,6 +123,23 @@ last block to write. In this mode, the file will be appended
 if already existing. If the file ends with .gz, the output will
 be gzipped.`,
 	}
+	exportReceiptsCommand = &cli.Command{
+		Action:    exportReceipts,
+		Name:      "export-receipts",
+		Usage:     "Export the receipts into file",
+		ArgsUsage: "<filename> [<blockNumFirst> <blockNumLast>]",
+		Flags: flags.Merge([]cli.Flag{
+			utils.CacheFlag,
+			utils.SyncModeFlag,
+		}, utils.DatabaseFlags),
+		Category: "BLOCKCHAIN COMMANDS",
+		Description: `
+Requires a first argument of the file to write to.
+Optional second and third arguments control the first and
+last block to write. In this mode, the file will be appended
+if already existing. If the file ends with .gz, the output will
+be gzipped.`,
+	}
 	importPreimagesCommand = &cli.Command{
 		Action:    importPreimages,
 		Name:      "import-preimages",

@@ -2593,3 +2593,33 @@ func (bc *BlockChain) SetTrieFlushInterval(interval time.Duration) {
 func (bc *BlockChain) GetTrieFlushInterval() time.Duration {
 	return time.Duration(bc.flushInterval.Load())
 }
+
+// ExportReceipts writes the active chain receipts to the given writer.
+func (bc *BlockChain) ExportReceipts(w io.Writer) error {
+	return bc.ExportReceiptsN(w, uint64(0), bc.CurrentBlock().Number.Uint64())
+}
+
+// ExportReceiptsN writes a subset of the active chain receipts to the given writer.
+func (bc *BlockChain) ExportReceiptsN(w io.Writer, first uint64, last uint64) error {
+	if first > last {
+		return fmt.Errorf("export failed: first (%d) is greater than last (%d)", first, last)
+	}
+	log.Info("Exporting batch of receipts", "count", last-first+1)
+
+	start, reported := time.Now(), time.Now()
+	for nr := first; nr <= last; nr++ {
+		block := bc.GetBlockByNumber(nr)
+		if block == nil {
+			return fmt.Errorf("export failed on #%d: not found", nr)
+		}
+		receipts := bc.GetReceiptsByHash(block.Hash())
+		if err := rlp.Encode(w, receipts); err != nil {
+			return err
+		}
+		if time.Since(reported) >= statsReportLimit {
+			log.Info("Exporting receipts", "exported", block.NumberU64()-first, "elapsed", common.PrettyDuration(time.Since(start)))
+			reported = time.Now()
+		}
+	}
+	return nil
+}
